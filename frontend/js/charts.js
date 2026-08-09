@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8000/analytics/charts";
+const API = "https://cyberradar.onrender.com/analytics/charts";
 
 async function loadCharts() {
 

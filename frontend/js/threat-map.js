@@ -2,7 +2,7 @@ let map;
 let stateLayer;
 let stateData = {};
 
-const API = "http://127.0.0.1:8000";
+const API = "https://cyberradar.onrender.com";
 
 
 async function loadMap() {

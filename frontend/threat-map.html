@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CyberRadar - Threat Map</title>
+
+    <link rel="stylesheet" href="css/dashboard.css">
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        .map-page {
+            padding: 25px;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .map-header h1 {
+            margin: 0;
+        }
+
+        .map-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        #indiaMap {
+            height: 650px;
+            width: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .state-panel {
+            background: #111827;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 18px;
+            padding: 25px;
+        }
+
+        .state-panel h2 {
+            margin-top: 0;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 10px 0 20px;
+        }
+
+        .map-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+
+        .map-stat span:first-child {
+            opacity: .65;
+        }
+
+        @media(max-width:900px) {
+            .map-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+    <div class="logo">
+        <img src="assets/logo.png">
+        <h2>CyberRadar</h2>
+    </div>
+
+    <ul>
+
+        <li onclick="location.href='dashboard.html'">
+            <i class="fa-solid fa-chart-line"></i>
+            Dashboard
+        </li>
+
+        <li>
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Incidents
+        </li>
+
+        <li onclick="location.href='analytics.html'">
+            <i class="fa-solid fa-chart-pie"></i>
+            Analytics
+        </li>
+
+        <li class="active">
+            <i class="fa-solid fa-map-location-dot"></i>
+            Threat Map
+        </li>
+
+        <li>
+            <i class="fa-solid fa-robot"></i>
+            AI Insights
+        </li>
+
+        <li onclick="location.href='reports.html'">
+            <i class="fa-solid fa-file"></i>
+            Reports
+        </li>
+
+    </ul>
+
+</div>
+
+
+<div class="main">
+
+    <div class="map-page">
+
+        <div class="map-header">
+
+            <div>
+                <h1>India Threat Map</h1>
+                <p>
+                    Real-time cyber incident distribution across India
+                </p>
+            </div>
+
+            <button onclick="loadMap()">
+                <i class="fa-solid fa-rotate"></i>
+                Refresh
+            </button>
+
+        </div>
+
+
+        <div class="map-layout">
+
+            <div id="indiaMap"></div>
+
+
+            <div class="state-panel">
+
+                <h2 id="stateName">
+                    Select a State
+                </h2>
+
+                <span
+                    id="riskBadge"
+                    class="risk-badge">
+                    —
+                </span>
+
+                <div class="map-stat">
+                    <span>Incidents</span>
+                    <strong id="incidentCount">—</strong>
+                </div>
+
+                <div class="map-stat">
+                    <span>Critical</span>
+                    <strong id="criticalCount">—</strong>
+                </div>
+
+                <div class="map-stat">
+                    <span>Financial Loss</span>
+                    <strong id="financialLoss">—</strong>
+                </div>
+
+                <div class="map-stat">
+                    <span>Affected Users</span>
+                    <strong id="affectedUsers">—</strong>
+                </div>
+
+                <div class="map-stat">
+                    <span>Top Attack</span>
+                    <strong id="topAttack">—</strong>
+                </div>
+
+                <div class="map-stat">
+                    <span>Top City</span>
+                    <strong id="topCity">—</strong>
+                </div>
+
+                <div class="map-stat">
+                    <span>Top Sector</span>
+                    <strong id="topSector">—</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="js/threat-map.js"></script>
+
+</body>
+</html>

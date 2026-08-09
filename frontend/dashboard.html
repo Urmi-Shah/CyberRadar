@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CyberRadar | Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/threat-map.css">
+</head>
+<body>
+<aside class="sidebar">
+<div class="logo"><img src="assets/logo.png"><h2>CyberRadar</h2></div>
+<nav>
+<a class="active"><i class="fa-solid fa-chart-line"></i>Dashboard</a>
+<a href="#data"><i class="fa-solid fa-database"></i>Data Sources</a>
+<a href="#analytics"><i class="fa-solid fa-chart-pie"></i>Analytics</a>
+<a href="#incidents"><i class="fa-solid fa-triangle-exclamation"></i>Incidents</a>
+<a href="#threat-map"><i class="fa-solid fa-map-location-dot"></i>Threat Map</a>
+<a href="reports"><i class="fa-solid fa-file"></i>Reports</a>
+</nav>
+<div class="side-status"><span class="dot"></span><div><b>Engine Online</b><small>SQLite • Pandas</small></div></div>
+</aside>
+
+<main class="main">
+<header class="topbar">
+<div><div class="eyebrow">CYBER THREAT INTELLIGENCE</div><h1>CyberRadar</h1><p>Analyze historical, manually reported and live web-scraped incidents.</p></div>
+<div class="top-actions"><button class="ghost" onclick="loadDashboard()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button><button class="primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Manual Entry</button></div>
+</header>
+
+<section id="data" class="source-strip">
+<div class="source-card"><i class="fa-solid fa-file-excel"></i><div><b>Historical Dataset</b><span>10,000+ records in SQLite</span></div><span class="live-tag">READY</span></div>
+<div class="source-card"><i class="fa-solid fa-globe"></i><div><b>Web Scraping</b><span>The Hacker News RSS</span></div><button class="mini" onclick="syncPipeline()" id="syncBtn">Sync Now</button></div>
+<div class="source-card"><i class="fa-solid fa-pen-to-square"></i><div><b>Manual Entry</b><span>Add your own incident</span></div><button class="mini" onclick="openModal()">Add</button></div>
+</section>
+
+<section class="filter-panel">
+<div class="filter-head"><div><b>Query Builder</b><span>Change filters and the analysis will run from the database.</span></div><button class="clear" onclick="resetFilters()">Reset</button></div>
+<div class="filters-grid">
+<label>Time Range<select id="period"><option value="all">All Data</option><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="6months">Last 6 Months</option><option value="year">Last 1 Year</option><option value="custom">Custom</option></select></label>
+<label>State<select id="state"><option>All</option></select></label>
+<label>City<select id="city"><option>All</option></select></label>
+<label>Attack Type<select id="incident_type"><option>All</option></select></label>
+<label>Sector<select id="sector"><option>All</option></select></label>
+<label>Source<select id="source"><option>All</option></select></label>
+<label>Status<select id="status"><option>All</option></select></label>
+<label>Search<input id="search" placeholder="incident, city, description..."></label>
+</div>
+<div class="check-row"><span>Severity:</span><label><input type="checkbox" class="sev" value="Critical"> Critical</label><label><input type="checkbox" class="sev" value="High"> High</label><label><input type="checkbox" class="sev" value="Medium"> Medium</label><label><input type="checkbox" class="sev" value="Low"> Low</label><div class="custom-dates"><input id="start" type="date"><span>to</span><input id="end" type="date"></div><button class="run" onclick="loadDashboard()"><i class="fa-solid fa-play"></i> Run Analysis</button></div>
+</section>
+
+<section class="kpis">
+<div class="kpi"><span>Total Incidents</span><strong id="total">0</strong><small>After current filters</small></div>
+<div class="kpi danger"><span>Critical Threats</span><strong id="critical">0</strong><small>Severity = Critical</small></div>
+<div class="kpi money"><span>Financial Loss</span><strong id="loss">₹0</strong><small>Recorded INR loss</small></div>
+<div class="kpi"><span>Affected Users</span><strong id="users">0</strong><small>Recorded affected users</small></div>
+</section>
+
+<section class="insights">
+<div><span>Risk Score</span><b id="riskScore">0</b></div><div><span>Risk Level</span><b id="riskLevel">—</b></div><div><span>Top State</span><b id="topState">—</b></div><div><span>Top Attack</span><b id="topAttack">—</b></div><div><span>Top Sector</span><b id="topSector">—</b></div><div><span>Top City</span><b id="topCity">—</b></div>
+</section>
+
+<section id="analytics" class="chart-grid">
+<div class="panel wide"><div class="panel-title"><h3>Incident Trend</h3><span>Monthly • actual database records</span></div><div class="chart-box"><canvas id="monthlyChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Attack Distribution</h3><span>By incident type</span></div><div class="chart-box"><canvas id="attackChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Severity</h3><span>Filtered records</span></div><div class="chart-box"><canvas id="severityChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Top States</h3><span>Top 10</span></div><div class="chart-box"><canvas id="stateChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Top Cities</h3><span>Top 10</span></div><div class="chart-box"><canvas id="cityChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Financial Loss Trend</h3><span>Monthly INR</span></div><div class="chart-box"><canvas id="lossChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Sector Distribution</h3><span>Current query</span></div><div class="chart-box"><canvas id="sectorChart"></canvas></div></div>
+<div class="panel"><div class="panel-title"><h3>Data Sources</h3><span>Dataset + live + manual</span></div><div class="chart-box"><canvas id="sourceChart"></canvas></div></div>
+</section>
+
+<section id="incidents" class="panel table-panel"><div class="panel-title"><h3>Latest Matching Incidents</h3><span id="resultCount">0 records</span></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Date</th><th>State</th><th>City</th><th>Attack</th><th>Severity</th><th>Sector</th><th>Source</th></tr></thead><tbody id="incidentRows"></tbody></table></div></section>
+<!-- ================= INDIA THREAT MAP ================= -->
+
+<section class="india-threat-section">
+
+<div class="section-header">
+
+<div>
+<h2>
+<i class="fa-solid fa-map-location-dot"></i>
+India Threat Map
+</h2>
+
+<p>
+Real-time cyber incident distribution across India
+</p>
+</div>
+
+<button
+class="map-refresh-btn"
+onclick="loadIndiaThreatMap()">
+
+<i class="fa-solid fa-rotate"></i>
+Refresh Map
+
+</button>
+
+</div>
+
+<div class="india-map-layout">
+
+<!-- MAP -->
+
+<div class="india-map-card">
+
+<div id="indiaMap"></div>
+
+<div class="map-legend">
+
+<div>
+<span class="legend-box low"></span>
+Low
+</div>
+
+<div>
+<span class="legend-box medium"></span>
+Medium
+</div>
+
+<div>
+<span class="legend-box high"></span>
+High
+</div>
+
+<div>
+<span class="legend-box critical"></span>
+Critical
+</div>
+
+</div>
+
+</div>
+
+<!-- STATE DETAILS -->
+
+<div class="state-panel">
+
+<div class="state-panel-header">
+
+<div>
+
+<span class="panel-label">
+SELECTED STATE
+</span>
+
+<h2 id="stateName">
+Select a State
+</h2>
+
+</div>
+
+<span
+id="riskBadge"
+class="risk-badge">
+—
+</span>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-shield-halved"></i>
+Incidents
+</span>
+
+<strong id="incidentCount">
+—
+</strong>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-triangle-exclamation"></i>
+Critical
+</span>
+
+<strong id="criticalCount">
+—
+</strong>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-indian-rupee-sign"></i>
+Financial Loss
+</span>
+
+<strong id="financialLoss">
+—
+</strong>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-users"></i>
+Affected Users
+</span>
+
+<strong id="affectedUsers">
+—
+</strong>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-bug"></i>
+Top Attack
+</span>
+
+<strong id="mapTopAttack">
+—
+</strong>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-city"></i>
+Top City
+</span>
+
+<strong id="mapTopCity">
+—
+</strong>
+
+</div>
+
+<div class="map-stat">
+
+<span>
+<i class="fa-solid fa-building"></i>
+Top Sector
+</span>
+
+<strong id="mapTopSector">
+—
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- REPORT MODULE -->
+
+<section class="reports-section" id="reports">
+
+    <div class="reports-header">
+
+        <div>
+            <h2>Cyber Threat Reports</h2>
+            <p>Generate a report using the filters selected above.</p>
+        </div>
+
+        <div class="report-actions">
+
+            <button class="report-btn pdf-btn" onclick="downloadReport('pdf')">
+                <i class="fa-solid fa-file-pdf"></i> PDF
+            </button>
+
+            <button class="report-btn excel-btn" onclick="downloadReport('excel')">
+                <i class="fa-solid fa-file-excel"></i> Excel
+            </button>
+
+            <button class="report-btn csv-btn" onclick="downloadReport('csv')">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+<div id="toast" class="toast"></div>
+</main>
+
+<div id="modal" class="modal"><div class="modal-card"><button class="close" onclick="closeModal()">×</button><h2>Add Incident Manually</h2><p>Record an incident and it will immediately become part of the analysis.</p>
+<form id="incidentForm" onsubmit="submitIncident(event)">
+<div class="form-grid"><label>Date<input id="m_date" type="date" required></label><label>State<input id="m_state" required></label><label>City<input id="m_city" required></label><label>Attack Type<select id="m_type"><option>Phishing</option><option>Ransomware</option><option>Malware</option><option>DDoS</option><option>Data Breach</option><option>Vulnerability</option><option>Other</option></select></label><label>Severity<select id="m_severity"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></label><label>Sector<input id="m_sector" placeholder="Banking, Healthcare..."></label><label>Financial Loss (INR)<input id="m_loss" type="number" min="0" value="0"></label><label>Affected Users<input id="m_users" type="number" min="0" value="0"></label><label>Status<select id="m_status"><option>Active</option><option>Investigating</option><option>Resolved</option></select></label></div>
+<label>Description<textarea id="m_description" rows="4" placeholder="Describe the incident..."></textarea></label><div class="modal-actions"><button type="button" class="ghost" onclick="closeModal()">Cancel</button><button class="primary" type="submit">Save Incident</button></div></form></div></div>
+<script src="js/dashboard.js"></script>
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+</body>
+</html>

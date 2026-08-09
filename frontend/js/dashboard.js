@@ -1,4 +1,4 @@
-const API_BASE = "https://cyberradar.onrender.com";
+const API = "https://cyberradar.onrender.com";
 const charts={};
 
 const $=id=>document.getElementById(id);
